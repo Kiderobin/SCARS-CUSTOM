@@ -13,4 +13,9 @@ function s.initial_effect(c)
 	e1:SetCondition(function(e) return Duel.IsTurnPlayer(1-e:GetHandlerPlayer()) and Duel.IsBattlePhase() end)
 	e1:SetTarget(aux.TargetBoolFunction(Card.IsAttackPos))
 	c:RegisterEffect(e1)
+
+	local e2=e1:Clone()
+	e3:SetCode(EFFECT_MUST_ATTACK_MONSTER)
+	e3:SetValue(function(e,_c) return _c==e:GetHandler() end)
+	c:RegisterEffect(e2)
 end
