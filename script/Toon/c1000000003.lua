@@ -121,3 +121,4 @@ function s.atop(e,tp,eg,ep,ev,re,r,rp)
 		Duel.PayLPCost(tp,500)
 		Duel.AttackCostPaid()
 	end
+end
