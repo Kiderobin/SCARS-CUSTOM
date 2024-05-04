@@ -15,7 +15,7 @@ function s.initial_effect(c)
 	c:RegisterEffect(e1)
 
 	local e2=e1:Clone()
-	e3:SetCode(EFFECT_MUST_ATTACK_MONSTER)
-	e3:SetValue(function(e,_c) return _c==e:GetHandler() end)
+	e2:SetCode(EFFECT_MUST_ATTACK_MONSTER)
+	e2:SetValue(function(e,_c) return _c==e:GetHandler() end)
 	c:RegisterEffect(e2)
 end
