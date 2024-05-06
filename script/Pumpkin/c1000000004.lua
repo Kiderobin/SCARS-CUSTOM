@@ -25,5 +25,5 @@ end
 	e1:SetTarget(s.splimit)
 	e1:SetReset(RESET_PHASE+PHASE_END)
 	Duel.RegisterEffect(e2,tp)
-	aux.RegisterClientHint(e:GetHandler(),nil,tp,1,0,aux.Stringid(id,2),nil)
+	aux.RegisterClientHint(e:GetHandler(),function,tp,1,0,aux.Stringid(id,2),nil)
 end
