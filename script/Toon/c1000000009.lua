@@ -1,8 +1,8 @@
+--拘束解除
 local s,id=GetID()
 function s.initial_effect(c)
-	--Special Summon "Water Dragon" from the hand, Deck or GY
+	--Activate
 	local e1=Effect.CreateEffect(c)
-	e1:SetDescription(aux.Stringid(id,0))
 	e1:SetCategory(CATEGORY_SPECIAL_SUMMON)
 	e1:SetType(EFFECT_TYPE_ACTIVATE)
 	e1:SetCode(EVENT_FREE_CHAIN)
@@ -11,36 +11,33 @@ function s.initial_effect(c)
 	e1:SetOperation(s.activate)
 	c:RegisterEffect(e1)
 end
-s.listed_names={1000000010,1000000008} --Toon Pup, Toon King
-function s.spcheck(sg,tp)
-	return aux.ReleaseCheckMMZ(sg,tp) and sg:IsExists(s.chk,1,nil,sg)
-end
-function s.chk(c,sg)
-	return c:IsCode(1000000010)
+s.listed_names={1000000010,1000000008}
+function s.cfilter(c,ft,tp)
+	return c:IsCode(1000000010) and (ft>0 or (c:GetSequence()<5 and c:IsControler(tp))) and (c:IsFaceup() or c:IsControler(tp))
 end
 function s.cost(e,tp,eg,ep,ev,re,r,rp,chk)
-	e:SetLabel(100)
-	if chk==0 then return Duel.CheckReleaseGroupCost(tp,Card.IsCode,3,nil,s.spcheck,nil,1000000010) end
-	local sg=Duel.SelectReleaseGroupCost(tp,Card.IsCode,3,3,nil,s.spcheck,nil,1000000010)
-	Duel.Release(sg,REASON_COST)
+	e:SetLabel(1)
+	local ft=Duel.GetLocationCount(tp,LOCATION_MZONE)
+	if chk==0 then return ft>-1 and Duel.CheckReleaseGroupCost(tp,s.cfilter,1,false,nil,nil,ft,tp) end
+	local g=Duel.SelectReleaseGroupCost(tp,s.cfilter,1,1,false,nil,nil,ft,tp)
+	Duel.Release(g,REASON_COST)
 end
-function s.spfilter(c,e,tp)
-	return c:IsCode(1000000008) and c:IsCanBeSpecialSummoned(e,0,tp,true,true)
+function s.filter(c,e,tp)
+	return c:IsCode(1000000008) and c:IsCanBeSpecialSummoned(e,0,tp,true,false)
 end
 function s.target(e,tp,eg,ep,ev,re,r,rp,chk)
 	if chk==0 then
 		if e:GetLabel()==0 and Duel.GetLocationCount(tp,LOCATION_MZONE)<=0 then return false end
 		e:SetLabel(0)
-		return Duel.IsExistingMatchingCard(s.spfilter,tp,LOCATION_EXTRA,0,1,nil,e,tp)
+		return Duel.IsExistingMatchingCard(s.filter,tp,LOCATION_EXTRA,0,1,nil,e,tp)
 	end
 	Duel.SetOperationInfo(0,CATEGORY_SPECIAL_SUMMON,nil,1,tp,LOCATION_EXTRA)
 end
 function s.activate(e,tp,eg,ep,ev,re,r,rp)
 	if Duel.GetLocationCount(tp,LOCATION_MZONE)<=0 then return end
 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SPSUMMON)
-	local g=Duel.SelectMatchingCard(tp,aux.NecroValleyFilter(s.spfilter),tp,LOCATION_HAND|LOCATION_DECK|LOCATION_GRAVE,0,1,1,nil,e,tp)
-	if #g>0 then
-		Duel.SpecialSummon(g,0,tp,tp,true,true,POS_FACEUP)
+	local g=Duel.SelectMatchingCard(tp,s.filter,tp,LOCATION_EXTRA,0,1,1,nil,e,tp)
+	if #g>0 and Duel.SpecialSummon(g,0,tp,tp,true,false,POS_FACEUP)>0 then
 		g:GetFirst():CompleteProcedure()
 	end
 end
