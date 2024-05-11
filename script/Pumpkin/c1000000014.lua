@@ -13,7 +13,7 @@ function s.initial_effect(c)
 	e2:SetRange(LOCATION_FZONE)
 	e2:SetTargetRange(LOCATION_MZONE+LOCATION_GRAVE,LOCATION_MZONE+LOCATION_GRAVE)
 	e2:SetCode(EFFECT_CHANGE_RACE)
-	e2:SetValue(RACE_ZOMBIE)
+	e2:SetValue(RACE_PLANT)
 	e2:SetTarget(s.tg)
 	c:RegisterEffect(e2)
 	--summon limit
