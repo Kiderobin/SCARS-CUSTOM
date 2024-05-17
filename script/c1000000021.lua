@@ -14,6 +14,20 @@ function s.initial_effect(c)
 	e1:SetTarget(s.thtg)
 	e1:SetOperation(s.thop)
 	c:RegisterEffect(e1)
+
+	local e2=Effect.CreateEffect(c)
+	e2:SetDescription(aux.Stringid(id,0))
+	e2:SetCategory(CATEGORY_SPECIAL_SUMMON+CATEGORY_TOKEN)
+	e2:SetType(EFFECT_TYPE_SINGLE+EFFECT_TYPE_TRIGGER_O)
+	e2:SetProperty(EFFECT_FLAG_DELAY+EFFECT_FLAG_DAMAGE_STEP)
+	e2:SetCode(EVENT_SUMMON_SUCCESS)
+	e2:SetCountLimit(1,id)
+	e2:SetTarget(s.tktg)
+	e2:SetOperation(s.tkop)
+	c:RegisterEffect(e2)
+	local e3=e2:Clone()
+	e3:SetCode(EVENT_SPSUMMON_SUCCESS)
+	c:RegisterEffect(e3)
 end
 function s.thcon(e,tp,eg,ep,ev,re,r,rp)
 	return Duel.IsTurnPlayer(tp) and Duel.GetFieldGroupCount(tp,LOCATION_DECK,0)>0
@@ -50,4 +64,23 @@ function s.thop(e,tp,eg,ep,ev,re,r,rp)
 		Duel.SendtoHand(g,nil,REASON_EFFECT)
 		Duel.ConfirmCards(1-tp,g)
 	end
+end
+
+
+
+function s.tktg(e,tp,eg,ep,ev,re,r,rp,chk)
+	if chk==0 then
+		return Duel.GetLocationCount(tp,LOCATION_MZONE)>0
+			and Duel.IsPlayerCanSpecialSummonMonster(tp,1000000026,0,TYPES_TOKEN+TYPE_TUNER,500,2000,4,RACE_SPELLCASTER,ATTRIBUTE_DARK)
+	end
+	Duel.SetOperationInfo(0,CATEGORY_TOKEN,nil,1,0,0)
+	Duel.SetOperationInfo(0,CATEGORY_SPECIAL_SUMMON,nil,1,tp,0)
+end
+function s.tkop(e,tp,eg,ep,ev,re,r,rp)
+	if s.tktg(e,tp,eg,ep,ev,re,r,rp,0) then
+		local c=e:GetHandler()
+		local token=Duel.CreateToken(tp,1000000026)
+		Duel.SpecialSummonStep(token,0,tp,tp,false,false,POS_FACEUP)
+	end
+	Duel.SpecialSummonComplete()
 end
