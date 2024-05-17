@@ -1,4 +1,4 @@
---幻想の黒魔導師
+--Obsidian Black Magician Girl
 local s,id=GetID()
 function s.initial_effect(c)
 	--xyz summon
