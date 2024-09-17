@@ -1,4 +1,3 @@
--- TESRD
 local s,id=GetID()
 function s.initial_effect(c)
     -- Cannot be Normal Summoned/Set
@@ -24,23 +23,22 @@ function s.initial_effect(c)
     e3:SetCode(EVENT_ATTACK_ANNOUNCE)
     e3:SetOperation(s.atkop)
     c:RegisterEffect(e3)
-    -- Destroy instead of "Toon World"
+    -- Destroy this card if "Toon World" is destroyed
     local e4=Effect.CreateEffect(c)
     e4:SetType(EFFECT_TYPE_CONTINUOUS+EFFECT_TYPE_FIELD)
     e4:SetRange(LOCATION_MZONE)
-    e4:SetCode(EFFECT_DESTROY_REPLACE)
-    e4:SetTarget(s.reptg)
-    e4:SetValue(s.repval)
-    e4:SetOperation(s.repop)
+    e4:SetCode(EVENT_DESTROYED)
+    e4:SetCondition(s.descon)
+    e4:SetOperation(s.desop)
     c:RegisterEffect(e4)
-    -- Destroy if "Toon World" is not on the field
+    -- Special Summon from Graveyard during next Standby Phase if destroyed by battle or card effect
     local e5=Effect.CreateEffect(c)
     e5:SetType(EFFECT_TYPE_SINGLE+EFFECT_TYPE_CONTINUOUS)
-    e5:SetCode(EVENT_LEAVE_FIELD)
-    e5:SetCondition(s.descon)
-    e5:SetOperation(s.desop)
+    e5:SetCode(EVENT_DESTROYED)
+    e5:SetCondition(s.regcon)
+    e5:SetOperation(s.regop)
     c:RegisterEffect(e5)
-    -- Special Summon from Graveyard
+    -- Special Summon during Standby Phase
     local e6=Effect.CreateEffect(c)
     e6:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_TRIGGER_O)
     e6:SetCode(EVENT_PHASE+PHASE_STANDBY)
@@ -51,13 +49,15 @@ function s.initial_effect(c)
     c:RegisterEffect(e6)
 end
 
+-- Special Summon Condition
 function s.spfilter(c)
     return c:IsType(TYPE_TOON) and c:IsAbleToRemoveAsCost()
 end
 
 function s.spcon(e,c)
     if c==nil then return true end
-    return Duel.IsExistingMatchingCard(s.spfilter,c:GetControler(),LOCATION_HAND,0,2,nil) and Duel.IsExistingMatchingCard(aux.FaceupFilter(Card.IsCode,15259703),c:GetControler(),LOCATION_ONFIELD,0,1,nil)
+    return Duel.IsExistingMatchingCard(s.spfilter,c:GetControler(),LOCATION_HAND,0,2,nil)
+        and Duel.IsExistingMatchingCard(aux.FaceupFilter(Card.IsCode,15259703),c:GetControler(),LOCATION_ONFIELD,0,1,nil)
 end
 
 function s.spop(e,tp,eg,ep,ev,re,r,rp,c)
@@ -66,6 +66,7 @@ function s.spop(e,tp,eg,ep,ev,re,r,rp,c)
     Duel.Remove(g,POS_FACEUP,REASON_COST)
 end
 
+-- Attack condition
 function s.atkcon(e)
     return e:GetHandler():IsSummonType(SUMMON_TYPE_SPECIAL) and e:GetHandler():GetTurnID()==Duel.GetTurnCount()
 end
@@ -78,37 +79,44 @@ function s.atkop(e,tp,eg,ep,ev,re,r,rp)
     end
 end
 
-function s.reptg(e,tp,eg,ep,ev,re,r,rp,chk)
-    if chk==0 then return eg:IsExists(s.repfilter,1,nil,tp) and e:GetHandler():IsAbleToGrave() end
-    return Duel.SelectEffectYesNo(tp,e:GetHandler(),96)
-end
-
-function s.repfilter(c,tp)
-    return c:IsFaceup() and c:IsCode(15259703) and c:IsControler(tp) and c:IsLocation(LOCATION_ONFIELD) and not c:IsReason(REASON_REPLACE)
-end
-
-function s.repval(e,c)
-    return s.repfilter(c,e:GetHandlerPlayer())
-end
-
-function s.repop(e,tp,eg,ep,ev,re,r,rp)
-    Duel.SendtoGrave(e:GetHandler(),REASON_EFFECT+REASON_REPLACE)
-end
-
+-- Destroy this card if "Toon World" is destroyed
 function s.descon(e,tp,eg,ep,ev,re,r,rp)
-    return not Duel.IsExistingMatchingCard(aux.FaceupFilter(Card.IsCode,15259703),tp,LOCATION_ONFIELD,0,1,nil)
+    return eg:IsExists(Card.IsCode,1,nil,15259703) -- Check if "Toon World" is destroyed
 end
 
 function s.desop(e,tp,eg,ep,ev,re,r,rp)
-    Duel.Destroy(e:GetHandler(),REASON_EFFECT)
+    Duel.Destroy(e:GetHandler(),REASON_EFFECT) -- Destroy this card
 end
 
+-- Register for Special Summon if destroyed by battle or card effect
+function s.regcon(e,tp,eg,ep,ev,re,r,rp)
+    local c=e:GetHandler()
+    return c:IsReason(REASON_BATTLE+REASON_EFFECT) and c:IsPreviousLocation(LOCATION_ONFIELD)
+end
+
+function s.regop(e,tp,eg,ep,ev,re,r,rp)
+    -- Register to Special Summon during the next Standby Phase
+    local e1=Effect.CreateEffect(e:GetHandler())
+    e1:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_CONTINUOUS)
+    e1:SetCode(EVENT_PHASE+PHASE_STANDBY)
+    e1:SetCountLimit(1)
+    e1:SetLabel(Duel.GetTurnCount()+1)
+    e1:SetCondition(s.spcon2)
+    e1:SetTarget(s.sptg2)
+    e1:SetOperation(s.spop2)
+    e1:SetReset(RESET_PHASE+PHASE_STANDBY+RESET_SELF_TURN)
+    Duel.RegisterEffect(e1,tp)
+end
+
+-- Special Summon from Graveyard Condition (next Standby Phase after destruction)
 function s.spcon2(e,tp,eg,ep,ev,re,r,rp)
-    return Duel.IsExistingMatchingCard(aux.FaceupFilter(Card.IsCode,15259703),tp,LOCATION_ONFIELD,0,1,nil)
+    return Duel.GetTurnCount()==e:GetLabel()
+        and Duel.IsExistingMatchingCard(aux.FaceupFilter(Card.IsCode,15259703),tp,LOCATION_ONFIELD,0,1,nil)
 end
 
 function s.sptg2(e,tp,eg,ep,ev,re,r,rp,chk)
-    if chk==0 then return Duel.GetLocationCount(tp,LOCATION_MZONE)>0 and e:GetHandler():IsCanBeSpecialSummoned(e,0,tp,false,false) end
+    if chk==0 then return Duel.GetLocationCount(tp,LOCATION_MZONE)>0
+        and e:GetHandler():IsCanBeSpecialSummoned(e,0,tp,false,false) end
     Duel.SetOperationInfo(0,CATEGORY_SPECIAL_SUMMON,e:GetHandler(),1,0,0)
 end
 
