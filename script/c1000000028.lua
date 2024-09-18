@@ -1,4 +1,5 @@
 -- Black Ritual Seizer Dragon
+-- Created by ScareTheVoices
 local s,id=GetID()
 function s.initial_effect(c)
     -- XYZ Summon
@@ -19,7 +20,7 @@ function s.initial_effect(c)
 end
 
 function s.controlcon(e,tp,eg,ep,ev,re,r,rp)
-    return Duel.IsExistingMatchingCard(Card.IsType,tp,0,LOCATION_MZONE,1,nil,TYPE_RITUAL,TYPE_MONSTER)
+    return Duel.IsExistingMatchingCard(Card.IsType,tp,0,LOCATION_MZONE,1,nil,TYPE_RITUAL)
 end
 
 function s.controlcost(e,tp,eg,ep,ev,re,r,rp,chk)
@@ -29,7 +30,7 @@ end
 
 function s.controltg(e,tp,eg,ep,ev,re,r,rp,chk)
     if chk==0 then return Duel.IsExistingMatchingCard(Card.IsType,tp,0,LOCATION_MZONE,1,nil,TYPE_RITUAL) end
-    Duel.SetOperationInfo(0,CATEGORY_CONTROL,nil,1,0,0)
+    Duel.SetOperationInfo(0,CATEGORY_CONTROL,Duel.GetMatchingGroup(Card.IsType,tp,0,LOCATION_MZONE,nil,TYPE_RITUAL),1,0,0)
 end
 
 function s.controlop(e,tp,eg,ep,ev,re,r,rp)
