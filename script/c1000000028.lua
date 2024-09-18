@@ -1,5 +1,4 @@
 -- Black Ritual Seizer Dragon
--- Created by ScareTheVoices
 local s,id=GetID()
 function s.initial_effect(c)
     -- XYZ Summon
@@ -17,10 +16,20 @@ function s.initial_effect(c)
     e1:SetTarget(s.controltg)
     e1:SetOperation(s.controlop)
     c:RegisterEffect(e1,false,REGISTER_FLAG_DETACH_XMAT)
+    -- Destroy all Ritual Monsters when destroyed
+    local e2=Effect.CreateEffect(c)
+    e2:SetDescription(aux.Stringid(id,1))
+    e2:SetCategory(CATEGORY_DESTROY)
+    e2:SetType(EFFECT_TYPE_SINGLE+EFFECT_TYPE_TRIGGER_F)
+    e2:SetCode(EVENT_DESTROYED)
+    e2:SetCondition(s.descon)
+    e2:SetTarget(s.destg)
+    e2:SetOperation(s.desop)
+    c:RegisterEffect(e2)
 end
 
 function s.controlcon(e,tp,eg,ep,ev,re,r,rp)
-    return Duel.IsExistingMatchingCard(Card.IsType,tp,0,LOCATION_MZONE,1,nil,TYPE_RITUAL)
+    return Duel.IsExistingMatchingCard(Card.IsType,tp,0,LOCATION_MZONE,1,nil,TYPE_RITUAL,TYPE_MONSTER)
 end
 
 function s.controlcost(e,tp,eg,ep,ev,re,r,rp,chk)
@@ -39,4 +48,19 @@ function s.controlop(e,tp,eg,ep,ev,re,r,rp)
     if #g>0 then
         Duel.GetControl(g,tp)
     end
+end
+
+function s.descon(e,tp,eg,ep,ev,re,r,rp)
+    return e:GetHandler():IsReason(REASON_BATTLE+REASON_EFFECT)
+end
+
+function s.destg(e,tp,eg,ep,ev,re,r,rp,chk)
+    if chk==0 then return Duel.IsExistingMatchingCard(Card.IsType,tp,LOCATION_MZONE,0,1,nil,TYPE_RITUAL) end
+    local g=Duel.GetMatchingGroup(Card.IsType,tp,LOCATION_MZONE,0,nil,TYPE_RITUAL)
+    Duel.SetOperationInfo(0,CATEGORY_DESTROY,g,#g,0,0)
+end
+
+function s.desop(e,tp,eg,ep,ev,re,r,rp)
+    local g=Duel.GetMatchingGroup(Card.IsType,tp,LOCATION_MZONE,0,nil,TYPE_RITUAL)
+    Duel.Destroy(g,REASON_EFFECT)
 end
