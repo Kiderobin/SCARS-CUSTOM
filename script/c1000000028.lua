@@ -8,7 +8,8 @@ function s.initial_effect(c)
     local e1=Effect.CreateEffect(c)
     e1:SetDescription(aux.Stringid(id,0))
     e1:SetCategory(CATEGORY_CONTROL)
-    e1:SetType(EFFECT_TYPE_IGNITION)
+    e1:SetType(EFFECT_TYPE_QUICK_O)
+    e1:SetCode(EVENT_FREE_CHAIN)
     e1:SetRange(LOCATION_MZONE)
     e1:SetCountLimit(1)
     e1:SetCondition(s.controlcon)
@@ -16,16 +17,26 @@ function s.initial_effect(c)
     e1:SetTarget(s.controltg)
     e1:SetOperation(s.controlop)
     c:RegisterEffect(e1,false,REGISTER_FLAG_DETACH_XMAT)
-    -- Destroy all Ritual Monsters when destroyed
+    -- Attach Ritual monsters as Xyz material
     local e2=Effect.CreateEffect(c)
     e2:SetDescription(aux.Stringid(id,1))
-    e2:SetCategory(CATEGORY_DESTROY)
-    e2:SetType(EFFECT_TYPE_SINGLE+EFFECT_TYPE_TRIGGER_F)
-    e2:SetCode(EVENT_DESTROYED)
-    e2:SetCondition(s.descon)
-    e2:SetTarget(s.destg)
-    e2:SetOperation(s.desop)
+    e2:SetCategory(CATEGORY_TOHAND)
+    e2:SetType(EFFECT_TYPE_IGNITION)
+    e2:SetRange(LOCATION_MZONE)
+    e2:SetCountLimit(1)
+    e2:SetTarget(s.mattg)
+    e2:SetOperation(s.matop)
     c:RegisterEffect(e2)
+    -- Destroy all Ritual Monsters when destroyed
+    local e3=Effect.CreateEffect(c)
+    e3:SetDescription(aux.Stringid(id,2))
+    e3:SetCategory(CATEGORY_DESTROY)
+    e3:SetType(EFFECT_TYPE_SINGLE+EFFECT_TYPE_TRIGGER_F)
+    e3:SetCode(EVENT_DESTROYED)
+    e3:SetCondition(s.descon)
+    e3:SetTarget(s.destg)
+    e3:SetOperation(s.desop)
+    c:RegisterEffect(e3)
 end
 
 function s.controlcon(e,tp,eg,ep,ev,re,r,rp)
@@ -39,7 +50,7 @@ end
 
 function s.controltg(e,tp,eg,ep,ev,re,r,rp,chk)
     if chk==0 then return Duel.IsExistingMatchingCard(Card.IsType,tp,0,LOCATION_MZONE,1,nil,TYPE_RITUAL) end
-    Duel.SetOperationInfo(0,CATEGORY_CONTROL,Duel.GetMatchingGroup(Card.IsType,tp,0,LOCATION_MZONE,nil,TYPE_RITUAL),1,0,0)
+    Duel.SetOperationInfo(0,CATEGORY_CONTROL,nil,1,0,1)
 end
 
 function s.controlop(e,tp,eg,ep,ev,re,r,rp)
@@ -47,6 +58,19 @@ function s.controlop(e,tp,eg,ep,ev,re,r,rp)
     local g=Duel.SelectMatchingCard(tp,Card.IsType,tp,0,LOCATION_MZONE,1,1,nil,TYPE_RITUAL)
     if #g>0 then
         Duel.GetControl(g,tp)
+    end
+end
+
+function s.mattg(e,tp,eg,ep,ev,re,r,rp,chk)
+    if chk==0 then return Duel.IsExistingMatchingCard(Card.IsType,tp,LOCATION_MZONE,0,1,nil,TYPE_RITUAL) end
+    Duel.SetOperationInfo(0,CATEGORY_TOHAND,nil,1,0,1)
+end
+
+function s.matop(e,tp,eg,ep,ev,re,r,rp)
+    Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_XMATERIAL)
+    local g=Duel.SelectMatchingCard(tp,Card.IsType,tp,LOCATION_MZONE,0,1,1,nil,TYPE_RITUAL)
+    if #g>0 then
+        Duel.Overlay(e:GetHandler(),g)
     end
 end
 
