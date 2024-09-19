@@ -29,7 +29,7 @@ function s.initial_effect(c)
 end
 
 function s.controlcon(e,tp,eg,ep,ev,re,r,rp)
-    return Duel.IsExistingMatchingCard(Card.IsType,tp,0,LOCATION_MZONE,1,nil,TYPE_RITUAL,TYPE_MONSTER)
+    return Duel.IsExistingMatchingCard(Card.IsType,tp,0,LOCATION_MZONE,1,nil,TYPE_RITUAL+TYPE_MONSTER)
 end
 
 function s.controlcost(e,tp,eg,ep,ev,re,r,rp,chk)
@@ -38,13 +38,13 @@ function s.controlcost(e,tp,eg,ep,ev,re,r,rp,chk)
 end
 
 function s.controltg(e,tp,eg,ep,ev,re,r,rp,chk)
-    if chk==0 then return Duel.IsExistingMatchingCard(Card.IsType,tp,0,LOCATION_MZONE,1,nil,TYPE_RITUAL) end
-    Duel.SetOperationInfo(0,CATEGORY_CONTROL,Duel.GetMatchingGroup(Card.IsType,tp,0,LOCATION_MZONE,nil,TYPE_RITUAL),1,0,0)
+    if chk==0 then return Duel.IsExistingMatchingCard(Card.IsType,tp,0,LOCATION_MZONE,1,nil,TYPE_RITUAL+TYPE_MONSTER) end
+    Duel.SetOperationInfo(0,CATEGORY_CONTROL,Duel.GetMatchingGroup(Card.IsType,tp,0,LOCATION_MZONE,nil,TYPE_RITUAL+TYPE_MONSTER),1,0,0)
 end
 
 function s.controlop(e,tp,eg,ep,ev,re,r,rp)
     Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_CONTROL)
-    local g=Duel.SelectMatchingCard(tp,Card.IsType,tp,0,LOCATION_MZONE,1,1,nil,TYPE_RITUAL)
+    local g=Duel.SelectMatchingCard(tp,Card.IsType,tp,0,LOCATION_MZONE,1,1,nil,TYPE_RITUAL+TYPE_MONSTER)
     if #g>0 then
         Duel.GetControl(g,tp)
     end
@@ -55,12 +55,12 @@ function s.descon(e,tp,eg,ep,ev,re,r,rp)
 end
 
 function s.destg(e,tp,eg,ep,ev,re,r,rp,chk)
-    if chk==0 then return Duel.IsExistingMatchingCard(Card.IsType,tp,LOCATION_MZONE,0,1,nil,TYPE_RITUAL) end
-    local g=Duel.GetMatchingGroup(Card.IsType,tp,LOCATION_MZONE,0,nil,TYPE_RITUAL)
+    if chk==0 then return Duel.IsExistingMatchingCard(Card.IsType,tp,LOCATION_MZONE,0,1,nil,TYPE_RITUAL+TYPE_MONSTER) end
+    local g=Duel.GetMatchingGroup(Card.IsType,tp,LOCATION_MZONE,0,nil,TYPE_RITUAL+TYPE_MONSTER)
     Duel.SetOperationInfo(0,CATEGORY_DESTROY,g,#g,0,0)
 end
 
 function s.desop(e,tp,eg,ep,ev,re,r,rp)
-    local g=Duel.GetMatchingGroup(Card.IsType,tp,LOCATION_MZONE,0,nil,TYPE_RITUAL)
+    local g=Duel.GetMatchingGroup(Card.IsType,tp,LOCATION_MZONE,0,nil,TYPE_RITUAL+TYPE_MONSTER)
     Duel.Destroy(g,REASON_EFFECT)
 end
