@@ -6,7 +6,7 @@ function s.initial_effect(c)
     c:EnableReviveLimit()
     -- Take control of opponent's Ritual monster
     local e1=Effect.CreateEffect(c)
-    e1:SetDescription(aux.Stringid(id,0))
+    e1:SetDescription(aux.Stringid(id,0)) -- Description for the first effect
     e1:SetCategory(CATEGORY_CONTROL)
     e1:SetType(EFFECT_TYPE_QUICK_O)
     e1:SetCode(EVENT_FREE_CHAIN)
@@ -19,7 +19,7 @@ function s.initial_effect(c)
     c:RegisterEffect(e1,false,REGISTER_FLAG_DETACH_XMAT)
     -- Attach Ritual monsters as Xyz material
     local e2=Effect.CreateEffect(c)
-    e2:SetDescription(aux.Stringid(id,1))
+    e2:SetDescription(aux.Stringid(id,1)) -- Description for the second effect
     e2:SetCategory(CATEGORY_TOHAND)
     e2:SetType(EFFECT_TYPE_IGNITION)
     e2:SetRange(LOCATION_MZONE)
@@ -29,7 +29,7 @@ function s.initial_effect(c)
     c:RegisterEffect(e2)
     -- Destroy all Ritual Monsters when destroyed
     local e3=Effect.CreateEffect(c)
-    e3:SetDescription(aux.Stringid(id,2))
+    e3:SetDescription(aux.Stringid(id,2)) -- Description for the third effect
     e3:SetCategory(CATEGORY_DESTROY)
     e3:SetType(EFFECT_TYPE_SINGLE+EFFECT_TYPE_TRIGGER_F)
     e3:SetCode(EVENT_DESTROYED)
