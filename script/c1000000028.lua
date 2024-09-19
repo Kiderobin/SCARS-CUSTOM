@@ -37,6 +37,17 @@ function s.initial_effect(c)
     e3:SetTarget(s.destg)
     e3:SetOperation(s.desop)
     c:RegisterEffect(e3)
+    -- Gain ATK/DEF for each Ritual monster attached
+    local e4=Effect.CreateEffect(c)
+    e4:SetType(EFFECT_TYPE_SINGLE)
+    e4:SetCode(EFFECT_UPDATE_ATTACK)
+    e4:SetProperty(EFFECT_FLAG_SINGLE_RANGE)
+    e4:SetRange(LOCATION_MZONE)
+    e4:SetValue(s.atkval)
+    c:RegisterEffect(e4)
+    local e5=e4:Clone()
+    e5:SetCode(EFFECT_UPDATE_DEFENSE)
+    c:RegisterEffect(e5)
 end
 
 function s.controlcon(e,tp,eg,ep,ev,re,r,rp)
@@ -87,4 +98,15 @@ end
 function s.desop(e,tp,eg,ep,ev,re,r,rp)
     local g=Duel.GetMatchingGroup(Card.IsType,tp,LOCATION_MZONE,0,nil,TYPE_RITUAL)
     Duel.Destroy(g,REASON_EFFECT)
+end
+
+function s.atkval(e,c)
+    local count=0
+    local og=c:GetOverlayGroup()
+    for tc in aux.Next(og) do
+        if tc:IsType(TYPE_RITUAL) then
+            count=count+1
+        end
+    end
+    return count*500
 end
