@@ -8,7 +8,7 @@ function s.initial_effect(c)
 	e1:SetType(EFFECT_TYPE_FIELD)
 	e1:SetCode(EFFECT_SPSUMMON_PROC)
 	e1:SetProperty(EFFECT_FLAG_UNCOPYABLE)
-	e1:SetRange(LOCATION_DECK,LOCATION_HAND)
+	e1:SetRange(LOCATION_DECK+LOCATION_HAND)
 	e1:SetCondition(s.spcon)
 	e1:SetTarget(s.sptg)
 	e1:SetOperation(s.spop)
@@ -37,7 +37,7 @@ function s.sptg(e,tp,eg,ep,ev,re,r,rp,c)
 	if g then
 		g:KeepAlive()
 		e:SetLabelObject(g)
-	return true
+		return true
 	end
 	return false
 end
