@@ -74,7 +74,7 @@ function s.ctop(e,tp,eg,ep,ev,re,r,rp)
 end
 
 function s.retcon(e,tp,eg,ep,ev,re,r,rp)
-    return e:GetHandler():IsReason(REASON_DESTROY) or e:GetHandler():IsReason(REASON_REMOVE)
+    return e:GetHandler():IsReason(REASON_DESTROY)
 end
 
 function s.rettg(e,tp,eg,ep,ev,re,r,rp,chk)
