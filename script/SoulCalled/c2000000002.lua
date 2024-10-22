@@ -22,17 +22,20 @@ function s.initial_effect(c)
     e2:SetOperation(s.retop)
     c:RegisterEffect(e2)
 
-    -- Special summon once per turn during your Main Phase
+    -- Destroy a Spell/Trap when a monster with setcode 0x1317 is Summoned and add a counter
     local e3 = Effect.CreateEffect(c)
-    e3:SetDescription(aux.Stringid(id, 1))
-    e3:SetCategory(CATEGORY_SPECIAL_SUMMON)
-    e3:SetType(EFFECT_TYPE_IGNITION)
+    e3:SetType(EFFECT_TYPE_FIELD + EFFECT_TYPE_TRIGGER_O)
+    e3:SetCategory(CATEGORY_DESTROY + CATEGORY_COUNTER)
+    e3:SetCode(EVENT_SUMMON_SUCCESS)
     e3:SetRange(LOCATION_MZONE)
-    e3:SetCountLimit(1)
-    e3:SetCondition(s.spcon)
-    e3:SetTarget(s.sptg)
-    e3:SetOperation(s.spop)
+    e3:SetCondition(s.descon)
+    e3:SetTarget(s.destg)
+    e3:SetOperation(s.desop)
     c:RegisterEffect(e3)
+
+    local e4 = e3:Clone()
+    e4:SetCode(EVENT_SPSUMMON_SUCCESS)
+    c:RegisterEffect(e4)
 end
 
 function s.retcon(e, tp, eg, ep, ev, re, r, rp)
@@ -53,31 +56,21 @@ function s.retop(e, tp, eg, ep, ev, re, r, rp)
     end
 end
 
-function s.spcon(e, tp, eg, ep, ev, re, r, rp)
-    return Duel.GetCurrentPhase() == PHASE_MAIN1 or Duel.GetCurrentPhase() == PHASE_MAIN2
+function s.descon(e, tp, eg, ep, ev, re, r, rp)
+    return eg:IsExists(Card.IsSetCard, 1, nil, 0x1317)
 end
 
-function s.sptg(e, tp, eg, ep, ev, re, r, rp, chk)
-    if chk == 0 then return Duel.IsExistingMatchingCard(Card.IsSetCard, tp, LOCATION_DECK, 0, 1, nil, 0x1317) end
-    Duel.SetOperationInfo(0, CATEGORY_SPECIAL_SUMMON, nil, 1, tp, LOCATION_DECK)
+function s.destg(e, tp, eg, ep, ev, re, r, rp, chk)
+    if chk == 0 then return Duel.IsExistingMatchingCard(Card.IsType, tp, LOCATION_ONFIELD, LOCATION_ONFIELD, 1, nil, TYPE_SPELL + TYPE_TRAP) end
+    Duel.SetOperationInfo(0, CATEGORY_DESTROY, nil, 1, 0, 0)
 end
 
-function s.spop(e, tp, eg, ep, ev, re, r, rp)
-    Duel.Hint(HINT_SELECTMSG, tp, HINTMSG_SPSUMMON)
-    local g = Duel.SelectMatchingCard(tp, Card.IsSetCard, tp, LOCATION_DECK, 0, 1, 1, nil, 0x1317)
+function s.desop(e, tp, eg, ep, ev, re, r, rp)
+    Duel.Hint(HINT_SELECTMSG, tp, HINTMSG_DESTROY)
+    local g = Duel.SelectMatchingCard(tp, Card.IsType, tp, LOCATION_ONFIELD, LOCATION_ONFIELD, 1, 1, nil, TYPE_SPELL + TYPE_TRAP)
     if #g > 0 then
-        Duel.SpecialSummon(g, 0, tp, tp, false, false, POS_FACEUP)
-        -- Negate the summoned monster's effects
-        local tc = g:GetFirst()
-        local e1 = Effect.CreateEffect(e:GetHandler())
-        e1:SetType(EFFECT_TYPE_SINGLE)
-        e1:SetCode(EFFECT_DISABLE)
-        e1:SetReset(RESET_EVENT + RESETS_STANDARD)
-        tc:RegisterEffect(e1)
-        local e2 = Effect.CreateEffect(e:GetHandler())
-        e2:SetType(EFFECT_TYPE_SINGLE)
-        e2:SetCode(EFFECT_DISABLE_EFFECT)
-        e2:SetReset(RESET_EVENT + RESETS_STANDARD)
-        tc:RegisterEffect(e2)
+        if Duel.Destroy(g, REASON_EFFECT) ~= 0 then
+            e:GetHandler():AddCounter(0x239b, 1)
+        end
     end
 end
