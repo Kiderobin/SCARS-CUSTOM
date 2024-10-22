@@ -7,11 +7,11 @@ function s.initial_effect(c)
     e1:SetProperty(EFFECT_FLAG_CANNOT_DISABLE + EFFECT_FLAG_UNCOPYABLE)
     e1:SetCode(EFFECT_CANNOT_SUMMON)
     c:RegisterEffect(e1)
-    
+
     -- Register Soul Counter
     c:EnableCounterPermit(0x239b)
     c:SetCounterLimit(0x239b, 12)
-    
+
     -- Add card to hand when destroyed or banished
     local e2 = Effect.CreateEffect(c)
     e2:SetType(EFFECT_TYPE_SINGLE + EFFECT_TYPE_TRIGGER_O)
@@ -21,18 +21,17 @@ function s.initial_effect(c)
     e2:SetTarget(s.rettg)
     e2:SetOperation(s.retop)
     c:RegisterEffect(e2)
-    
-    -- Banish spell/trap as a Quick Effect once per turn
+
+    -- Special summon once per turn during your Main Phase
     local e3 = Effect.CreateEffect(c)
     e3:SetDescription(aux.Stringid(id, 1))
-    e3:SetCategory(CATEGORY_REMOVE)
-    e3:SetType(EFFECT_TYPE_QUICK_O)
-    e3:SetCode(EVENT_FREE_CHAIN)
+    e3:SetCategory(CATEGORY_SPECIAL_SUMMON)
+    e3:SetType(EFFECT_TYPE_IGNITION)
     e3:SetRange(LOCATION_MZONE)
     e3:SetCountLimit(1)
-    e3:SetCost(s.rmcost)
-    e3:SetTarget(s.rmtg)
-    e3:SetOperation(s.rmop)
+    e3:SetCondition(s.spcon)
+    e3:SetTarget(s.sptg)
+    e3:SetOperation(s.spop)
     c:RegisterEffect(e3)
 end
 
@@ -54,20 +53,31 @@ function s.retop(e, tp, eg, ep, ev, re, r, rp)
     end
 end
 
-function s.rmcost(e, tp, eg, ep, ev, re, r, rp, chk)
-    if chk == 0 then return e:GetHandler():IsCanRemoveCounter(tp, 0x239b, 1, REASON_COST) end
-    e:GetHandler():RemoveCounter(tp, 0x239b, 1, REASON_COST)
+function s.spcon(e, tp, eg, ep, ev, re, r, rp)
+    return Duel.GetCurrentPhase() == PHASE_MAIN1 or Duel.GetCurrentPhase() == PHASE_MAIN2
 end
 
-function s.rmtg(e, tp, eg, ep, ev, re, r, rp, chk)
-    if chk == 0 then return Duel.IsExistingMatchingCard(Card.IsType, tp, 0, LOCATION_ONFIELD, 1, nil, TYPE_SPELL + TYPE_TRAP) end
-    Duel.SetOperationInfo(0, CATEGORY_REMOVE, nil, 1, 0, 0)
+function s.sptg(e, tp, eg, ep, ev, re, r, rp, chk)
+    if chk == 0 then return Duel.IsExistingMatchingCard(Card.IsSetCard, tp, LOCATION_DECK, 0, 1, nil, 0x1317) end
+    Duel.SetOperationInfo(0, CATEGORY_SPECIAL_SUMMON, nil, 1, tp, LOCATION_DECK)
 end
 
-function s.rmop(e, tp, eg, ep, ev, re, r, rp)
-    Duel.Hint(HINT_SELECTMSG, tp, HINTMSG_REMOVE)
-    local g = Duel.SelectMatchingCard(tp, Card.IsType, tp, 0, LOCATION_ONFIELD, 1, 1, nil, TYPE_SPELL + TYPE_TRAP)
+function s.spop(e, tp, eg, ep, ev, re, r, rp)
+    Duel.Hint(HINT_SELECTMSG, tp, HINTMSG_SPSUMMON)
+    local g = Duel.SelectMatchingCard(tp, Card.IsSetCard, tp, LOCATION_DECK, 0, 1, 1, nil, 0x1317)
     if #g > 0 then
-        Duel.Remove(g, POS_FACEUP, REASON_EFFECT)
+        Duel.SpecialSummon(g, 0, tp, tp, false, false, POS_FACEUP)
+        -- Negate the summoned monster's effects
+        local tc = g:GetFirst()
+        local e1 = Effect.CreateEffect(e:GetHandler())
+        e1:SetType(EFFECT_TYPE_SINGLE)
+        e1:SetCode(EFFECT_DISABLE)
+        e1:SetReset(RESET_EVENT + RESETS_STANDARD)
+        tc:RegisterEffect(e1)
+        local e2 = Effect.CreateEffect(e:GetHandler())
+        e2:SetType(EFFECT_TYPE_SINGLE)
+        e2:SetCode(EFFECT_DISABLE_EFFECT)
+        e2:SetReset(RESET_EVENT + RESETS_STANDARD)
+        tc:RegisterEffect(e2)
     end
 end
