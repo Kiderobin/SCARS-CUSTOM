@@ -8,47 +8,27 @@ function s.initial_effect(c)
     e1:SetProperty(EFFECT_FLAG_CANNOT_DISABLE + EFFECT_FLAG_UNCOPYABLE)
     e1:SetCode(EFFECT_CANNOT_SUMMON)
     c:RegisterEffect(e1)
-    --Add Soul Counters
-    local e2=Effect.CreateEffect(c)
-    e2:SetType(EFFECT_TYPE_CONTINUOUS + EFFECT_TYPE_FIELD)
-    e2:SetCode(EVENT_REMOVE)
-    e2:SetRange(LOCATION_MZONE)
-    e2:SetCondition(s.ctcon)
-    e2:SetOperation(s.ctop)
-    c:RegisterEffect(e2)
     --Register Soul Counter
     c:EnableCounterPermit(0x239b)
     c:SetCounterLimit(0x239b,12)
     --Add card to hand when destroyed or banished
+    local e2=Effect.CreateEffect(c)
+    e2:SetType(EFFECT_TYPE_SINGLE + EFFECT_TYPE_TRIGGER_O)
+    e2:SetProperty(EFFECT_FLAG_DAMAGE_STEP + EFFECT_FLAG_DELAY)
+    e2:SetCode(EVENT_LEAVE_FIELD)
+    e2:SetCondition(s.retcon)
+    e2:SetTarget(s.rettg)
+    e2:SetOperation(s.retop)
+    c:RegisterEffect(e2)
+    --Opponent sends cards from deck to graveyard once per Standby Phase
     local e3=Effect.CreateEffect(c)
-    e3:SetType(EFFECT_TYPE_SINGLE + EFFECT_TYPE_TRIGGER_O)
-    e3:SetProperty(EFFECT_FLAG_DAMAGE_STEP + EFFECT_FLAG_DELAY)
-    e3:SetCode(EVENT_LEAVE_FIELD)
-    e3:SetCondition(s.retcon)
-    e3:SetTarget(s.rettg)
-    e3:SetOperation(s.retop)
+    e3:SetType(EFFECT_TYPE_FIELD + EFFECT_TYPE_TRIGGER_F)
+    e3:SetCode(EVENT_PHASE + PHASE_STANDBY)
+    e3:SetRange(LOCATION_MZONE)
+    e3:SetCountLimit(1)
+    e3:SetCondition(s.deckdescon)
+    e3:SetOperation(s.deckdesop)
     c:RegisterEffect(e3)
-    -- Special Summon from graveyard
-    local e4=Effect.CreateEffect(c)
-    e4:SetDescription(aux.Stringid(id,1))
-    e4:SetCategory(CATEGORY_SPECIAL_SUMMON + CATEGORY_COUNTER)
-    e4:SetType(EFFECT_TYPE_IGNITION)
-    e4:SetRange(LOCATION_GRAVE)
-    e4:SetTarget(s.sptg)
-    e4:SetOperation(s.spop)
-    e4:SetCountLimit(1, id)
-    c:RegisterEffect(e4)
-end
-
-function s.ctcon(e,tp,eg,ep,ev,re,r,rp)
-    return eg:IsExists(Card.IsControler,1,nil,1-tp) and eg:IsExists(Card.IsReason,1,nil,REASON_EFFECT)
-end
-
-function s.ctop(e,tp,eg,ep,ev,re,r,rp)
-    local c=e:GetHandler()
-    if c:IsRelateToEffect(e) then
-        c:AddCounter(0x239b,1)
-    end
 end
 
 function s.retcon(e,tp,eg,ep,ev,re,r,rp)
@@ -69,37 +49,13 @@ function s.retop(e,tp,eg,ep,ev,re,r,rp)
     end
 end
 
-function s.sptg(e,tp,eg,ep,ev,re,r,rp,chk)
-    if chk==0 then return Duel.IsExistingMatchingCard(s.spfilter,tp,LOCATION_MZONE,0,1,nil) end
-    Duel.SetOperationInfo(0,CATEGORY_SPECIAL_SUMMON,e:GetHandler(),1,0,0)
+function s.deckdescon(e,tp,eg,ep,ev,re,r,rp)
+    return Duel.GetTurnPlayer()~=tp
 end
 
-function s.spop(e,tp,eg,ep,ev,re,r,rp)
-    local c=e:GetHandler()
-    Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_FACEUP)
-    local g=Duel.SelectMatchingCard(tp,s.spfilter,tp,LOCATION_MZONE,0,1,1,nil)
-    local tc=g:GetFirst()
-    if tc and c:IsRelateToEffect(e) then
-        tc:RemoveCounter(tp,0x239b,1,REASON_EFFECT)
-        if Duel.SpecialSummon(c,0,tp,tp,false,false,POS_FACEUP)~=0 then
-            local atk=tc:GetAttack()/2
-            local def=tc:GetDefense()/2
-            local e1=Effect.CreateEffect(c)
-            e1:SetType(EFFECT_TYPE_SINGLE)
-            e1:SetCode(EFFECT_SET_ATTACK_FINAL)
-            e1:SetValue(atk)
-            e1:SetReset(RESET_EVENT+RESETS_STANDARD)
-            c:RegisterEffect(e1)
-            local e2=Effect.CreateEffect(c)
-            e2:SetType(EFFECT_TYPE_SINGLE)
-            e2:SetCode(EFFECT_SET_DEFENSE_FINAL)
-            e2:SetValue(def)
-            e2:SetReset(RESET_EVENT+RESETS_STANDARD)
-            c:RegisterEffect(e2)
-        end
+function s.deckdesop(e,tp,eg,ep,ev,re,r,rp)
+    local ct=Duel.GetMatchingGroupCount(Card.IsSetCard,tp,LOCATION_MZONE,0,nil,0x1317)
+    if ct>0 then
+        Duel.DiscardDeck(1-tp,ct,REASON_EFFECT)
     end
-end
-
-function s.spfilter(c)
-    return c:IsFaceup() and c:IsCanRemoveCounter(tp,0x239b,1,REASON_EFFECT)
 end
