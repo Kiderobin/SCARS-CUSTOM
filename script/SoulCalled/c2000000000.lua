@@ -1,7 +1,7 @@
 --Soulcalled, Gravedigger
 local s, id = GetID()
 function s.initial_effect(c)
-     c:SetUniqueOnField(1,0,aux.FilterBoolFunction(Card.IsCode,2000000000),LOCATION_MZONE)
+    c:SetUniqueOnField(1,0,aux.FilterBoolFunction(Card.IsCode,2000000000),LOCATION_MZONE)
     -- Cannot be Normal Summoned
     local e1=Effect.CreateEffect(c)
     e1:SetType(EFFECT_TYPE_SINGLE)
@@ -43,7 +43,7 @@ function s.bantg(e,tp,eg,ep,ev,re,r,rp,chk)
     if chk==0 then return true end
     local c=e:GetHandler()
     local bc=c:GetBattleTarget()
-    if bc and bc:IsFaceup() and bc:GetAttack() > c:GetAttack() then
+    if bc and bc:IsFaceup() and bc:GetAttack() < c:GetAttack() then
         Duel.SetOperationInfo(0,CATEGORY_REMOVE,bc,1,0,0)
     end
 end
@@ -51,7 +51,7 @@ end
 function s.banop(e,tp,eg,ep,ev,re,r,rp)
     local c=e:GetHandler()
     local bc=c:GetBattleTarget()
-    if bc and bc:IsRelateToBattle() and bc:IsFaceup() and bc:GetAttack() > c:GetAttack() then
+    if bc and bc:IsRelateToBattle() and bc:IsFaceup() and bc:GetAttack() < c:GetAttack() then
         Duel.Remove(bc,POS_FACEUP,REASON_EFFECT)
         -- Add Soul Counter when a monster is banished by this card's effect
         if c:IsRelateToEffect(e) then
