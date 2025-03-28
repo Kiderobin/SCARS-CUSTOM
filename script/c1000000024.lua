@@ -83,8 +83,10 @@ function s.qriop(e,tp,eg,ep,ev,re,r,rp)
     local tg=Duel.SelectMatchingCard(tp,s.qritfilter,tp,LOCATION_HAND,0,1,1,nil,e,tp,mg,8)
     local tc=tg:GetFirst()
     if tc then
+        local level=tc:GetLevel()
         Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_REMOVE)
-        local mat=mg:SelectWithSumEqual(tp,Card.GetRitualLevel,tc:GetLevel(),1,99)
+        -- Ensure SelectWithSumEqual is called with the correct parameters
+        local mat=mg:SelectWithSumEqual(tp,Card.GetLevel,level,1,99)
         if #mat>0 then
             tc:SetMaterial(mat)
             Duel.Remove(mat,POS_FACEUP,REASON_EFFECT+REASON_MATERIAL+REASON_RITUAL)
