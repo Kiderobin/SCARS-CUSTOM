@@ -15,7 +15,7 @@ function s.initial_effect(c)
     c:RegisterEffect(e1)
     -- Quick Effect: Ritual Summon by banishing from Graveyard
     local e2=Effect.CreateEffect(c)
-    e2:SetCategory(CATEGORY_SPECIAL_SUMMON+CATEGORY_RITUAL_SUMMON)
+    e2:SetCategory(CATEGORY_SPECIAL_SUMMON)
     e2:SetType(EFFECT_TYPE_QUICK_O)
     e2:SetCode(EVENT_FREE_CHAIN)
     e2:SetRange(LOCATION_MZONE)
@@ -71,23 +71,25 @@ function s.qritfilter(c,e,tp,m,level)
 end
 
 function s.qritg(e,tp,eg,ep,ev,re,r,rp,chk)
-    local mg=Duel.GetMatchingGroup(Card.IsAbleToRemove,tp,LOCATION_GRAVE,0,nil)
+    local mg=Duel.GetMatchingGroup(function(c) return c:IsMonster() and c:IsAbleToRemove() end, tp, LOCATION_GRAVE, 0, nil)
     if chk==0 then return Duel.IsExistingMatchingCard(s.qritfilter,tp,LOCATION_HAND,0,1,nil,e,tp,mg,8) end
     Duel.SetOperationInfo(0,CATEGORY_SPECIAL_SUMMON,nil,1,tp,LOCATION_HAND)
 end
 
 -- Quick Effect: Ritual Summon operation
 function s.qriop(e,tp,eg,ep,ev,re,r,rp)
-    local mg=Duel.GetMatchingGroup(Card.IsAbleToRemove,tp,LOCATION_GRAVE,0,nil)
+    local mg=Duel.GetMatchingGroup(function(c) return c:IsMonster() and c:IsAbleToRemove() end, tp, LOCATION_GRAVE, 0, nil)
     Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SPSUMMON)
     local tg=Duel.SelectMatchingCard(tp,s.qritfilter,tp,LOCATION_HAND,0,1,1,nil,e,tp,mg,8)
     local tc=tg:GetFirst()
     if tc then
         Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_REMOVE)
-        local mat=mg:SelectWithSumEqual(tp,Card.GetRitualLevel,tc:GetLevel(),1,99,tc)
-        tc:SetMaterial(mat)
-        Duel.Remove(mat,POS_FACEUP,REASON_EFFECT+REASON_MATERIAL+REASON_RITUAL)
-        Duel.SpecialSummon(tc,SUMMON_TYPE_RITUAL,tp,tp,false,true,POS_FACEUP)
-        tc:CompleteProcedure()
+        local mat=mg:SelectWithSumEqual(tp,Card.GetRitualLevel,tc:GetLevel(),1,99)
+        if #mat>0 then
+            tc:SetMaterial(mat)
+            Duel.Remove(mat,POS_FACEUP,REASON_EFFECT+REASON_MATERIAL+REASON_RITUAL)
+            Duel.SpecialSummon(tc,SUMMON_TYPE_RITUAL,tp,tp,false,true,POS_FACEUP)
+            tc:CompleteProcedure()
+        end
     end
 end
