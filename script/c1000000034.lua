@@ -7,6 +7,7 @@ function s.initial_effect(c)
 	e1:SetCode(EFFECT_SPSUMMON_PROC)
 	e1:SetProperty(EFFECT_FLAG_UNCOPYABLE)
 	e1:SetRange(LOCATION_HAND)
+	e1:SetCountLimit(1,{id,1})
 	e1:SetCondition(s.spcon)
 	c:RegisterEffect(e1)
 	--When Special Summoned, gain 200 ATK for each Emerald Sovereign Ritual Dragon or Emerald Light monster you control
@@ -31,7 +32,9 @@ end
 --Condition for Special Summon
 function s.spcon(e,c)
 	if c==nil then return true end
-	return Duel.IsExistingMatchingCard(s.spfilter,c:GetControler(),LOCATION_MZONE,0,1,nil)
+	local tp=c:GetControler()
+	return Duel.GetLocationCount(tp,LOCATION_MZONE)>0
+		and Duel.IsExistingMatchingCard(s.spfilter,tp,LOCATION_MZONE,0,1,nil)
 end
 
 --Operation for ATK gain effect
