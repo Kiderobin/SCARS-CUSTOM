@@ -3,7 +3,6 @@ local s,id=GetID()
 function s.initial_effect(c)
 	--Special Summon 1 "Emerald Light" monster from hand or Deck, then optionally from GY
 	local e1=Effect.CreateEffect(c)
-	e1:SetDescription(aux.Stringid(id,0))
 	e1:SetCategory(CATEGORY_SPECIAL_SUMMON)
 	e1:SetType(EFFECT_TYPE_ACTIVATE)
 	e1:SetCode(EVENT_FREE_CHAIN)
@@ -11,15 +10,6 @@ function s.initial_effect(c)
 	e1:SetTarget(s.sptg)
 	e1:SetOperation(s.spop)
 	c:RegisterEffect(e1)
-	--Restrict Special Summons to "Emerald Light" monsters for the rest of the turn
-	local e2=Effect.CreateEffect(c)
-	e2:SetType(EFFECT_TYPE_FIELD)
-	e2:SetCode(EFFECT_CANNOT_SPECIAL_SUMMON)
-	e2:SetProperty(EFFECT_FLAG_PLAYER_TARGET)
-	e2:SetTargetRange(1,0)
-	e2:SetTarget(s.splimit)
-	e2:SetReset(RESET_PHASE+PHASE_END)
-	Duel.RegisterEffect(e2,0)
 end
 s.listed_series={0x4003}
 
@@ -48,11 +38,24 @@ end
 
 --Operation for Special Summon effect
 function s.spop(e,tp,eg,ep,ev,re,r,rp)
+	--Apply summon restriction
+	local e1=Effect.CreateEffect(e:GetHandler())
+	e1:SetType(EFFECT_TYPE_FIELD)
+	e1:SetCode(EFFECT_CANNOT_SPECIAL_SUMMON)
+	e1:SetProperty(EFFECT_FLAG_PLAYER_TARGET)
+	e1:SetTargetRange(1,0)
+	e1:SetTarget(s.splimit)
+	e1:SetReset(RESET_PHASE+PHASE_END)
+	Duel.RegisterEffect(e1,tp)
+	--Debug: Confirm restriction applied
+	Duel.Hint(HINT_MESSAGE,tp,aux.Stringid(id,2))
+	--Special Summon from hand or Deck
 	if Duel.GetLocationCount(tp,LOCATION_MZONE)<=0 then return end
 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SPSUMMON)
 	local g1=Duel.SelectMatchingCard(tp,s.spfilter1,tp,LOCATION_HAND+LOCATION_DECK,0,1,1,nil,e,tp)
 	if #g1>0 then
 		if Duel.SpecialSummon(g1,0,tp,tp,false,false,POS_FACEUP)>0 then
+			--Optional Special Summon from Graveyard
 			if Duel.GetLocationCount(tp,LOCATION_MZONE)>0
 				and Duel.IsExistingMatchingCard(s.spfilter2,tp,LOCATION_GRAVE,0,1,nil,e,tp)
 				and Duel.SelectYesNo(tp,aux.Stringid(id,1)) then
