@@ -1,63 +1,67 @@
---Radiant Reversal
+--Emerald Light, Shine Bright!
 local s,id=GetID()
 function s.initial_effect(c)
-	--Negate opponent’s Spell/Trap or monster effect, destroy cards in that column, optionally add "Emerald Light" monster from GY
+	--Special Summon 1 "Emerald Light" monster from hand or Deck, then optionally from GY
 	local e1=Effect.CreateEffect(c)
-	e1:SetDescription(aux.Stringid(id,0))
-	e1:SetCategory(CATEGORY_NEGATE+CATEGORY_DESTROY+CATEGORY_TOHAND)
+	e1:SetCategory(CATEGORY_SPECIAL_SUMMON)
 	e1:SetType(EFFECT_TYPE_ACTIVATE)
-	e1:SetCode(EVENT_CHAINING)
+	e1:SetCode(EVENT_FREE_CHAIN)
 	e1:SetCountLimit(1,id)
-	e1:SetCondition(s.condition)
-	e1:SetTarget(s.target)
-	e1:SetOperation(s.activate)
+	e1:SetTarget(s.sptg)
+	e1:SetOperation(s.spop)
 	c:RegisterEffect(e1)
 end
 s.listed_series={0x4003}
-s.listed_names={1000000034}
 
---Condition: Face-up card with ID 1000000034 and opponent’s Spell/Trap or monster effect
-function s.condition(e,tp,eg,ep,ev,re,r,rp)
-	return Duel.IsExistingMatchingCard(function(c) return c:IsFaceup() and c:IsCode(1000000034) end,tp,LOCATION_ONFIELD,0,1,nil)
-		and ep==1-tp and (re:IsActiveType(TYPE_SPELL+TYPE_TRAP) or re:IsActiveType(TYPE_MONSTER))
-		and Duel.IsChainNegatable(ev)
+--Special Summon limit to "Emerald Light" monsters
+function s.splimit(e,c)
+	return not c:IsSetCard(0x4003)
 end
 
---Filter for "Emerald Light" monsters in GY
-function s.thfilter(c)
-	return c:IsSetCard(0x4003) and c:IsMonster() and c:IsAbleToHand()
+--Filter for Special Summon from hand or Deck
+function s.spfilter1(c,e,tp)
+	return c:IsSetCard(0x4003) and c:IsMonster() and c:IsCanBeSpecialSummoned(e,0,tp,false,false)
 end
 
---Target: Negate activation, destroy column, optional GY recovery
-function s.target(e,tp,eg,ep,ev,re,r,rp,chk)
-	if chk==0 then return true end
-	Duel.SetOperationInfo(0,CATEGORY_NEGATE,eg,1,0,0)
-	local zone=re:GetHandler():GetColumn()
-	local dg=Duel.GetFieldGroup(tp,0,LOCATION_ONFIELD):Filter(Card.IsInColumn,nil,zone)
-	if #dg>0 then
-		Duel.SetOperationInfo(0,CATEGORY_DESTROY,dg,#dg,0,0)
-	end
-	Duel.SetPossibleOperationInfo(0,CATEGORY_TOHAND,nil,1,tp,LOCATION_GRAVE)
+--Filter for Special Summon from Graveyard
+function s.spfilter2(c,e,tp)
+	return c:IsSetCard(0x4003) and c:IsMonster() and c:IsCanBeSpecialSummoned(e,0,tp,false,false,POS_FACEUP)
 end
 
---Operation: Negate, destroy, add to hand
-function s.activate(e,tp,eg,ep,ev,re,r,rp)
-	if Duel.NegateActivation(ev) then
-		local tc=re:GetHandler()
-		if tc and tc:IsRelateToEffect(re) then
-			local zone=tc:GetColumn()
-			local dg=Duel.GetFieldGroup(tp,0,LOCATION_ONFIELD):Filter(Card.IsInColumn,nil,zone)
-			if #dg>0 then
-				Duel.Destroy(dg,REASON_EFFECT)
-			end
-		end
-		if Duel.IsExistingMatchingCard(s.thfilter,tp,LOCATION_GRAVE,0,1,nil)
-			and Duel.SelectYesNo(tp,aux.Stringid(id,1)) then
-			Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_ATOHAND)
-			local g=Duel.SelectMatchingCard(tp,s.thfilter,tp,LOCATION_GRAVE,0,1,1,nil)
-			if #g>0 then
-				Duel.SendtoHand(g,nil,REASON_EFFECT)
-				Duel.ConfirmCards(1-tp,g)
+--Target for Special Summon effect
+function s.sptg(e,tp,eg,ep,ev,re,r,rp,chk)
+	if chk==0 then return Duel.GetLocationCount(tp,LOCATION_MZONE)>0
+		and Duel.IsExistingMatchingCard(s.spfilter1,tp,LOCATION_HAND+LOCATION_DECK,0,1,nil,e,tp) end
+	Duel.SetOperationInfo(0,CATEGORY_SPECIAL_SUMMON,nil,1,tp,LOCATION_HAND+LOCATION_DECK)
+	Duel.SetPossibleOperationInfo(0,CATEGORY_SPECIAL_SUMMON,nil,1,tp,LOCATION_GRAVE)
+end
+
+--Operation for Special Summon effect
+function s.spop(e,tp,eg,ep,ev,re,r,rp)
+	--Apply summon restriction
+	local e1=Effect.CreateEffect(e:GetHandler())
+	e1:SetType(EFFECT_TYPE_FIELD)
+	e1:SetCode(EFFECT_CANNOT_SPECIAL_SUMMON)
+	e1:SetProperty(EFFECT_FLAG_PLAYER_TARGET)
+	e1:SetTargetRange(1,0)
+	e1:SetTarget(s.splimit)
+	e1:SetReset(RESET_PHASE+PHASE_END)
+	Duel.RegisterEffect(e1,tp)
+	--Special Summon from hand or Deck
+	if Duel.GetLocationCount(tp,LOCATION_MZONE)<=0 then return end
+	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SPSUMMON)
+	local g1=Duel.SelectMatchingCard(tp,s.spfilter1,tp,LOCATION_HAND+LOCATION_DECK,0,1,1,nil,e,tp)
+	if #g1>0 then
+		if Duel.SpecialSummon(g1,0,tp,tp,false,false,POS_FACEUP)>0 then
+			--Optional Special Summon from Graveyard
+			if Duel.GetLocationCount(tp,LOCATION_MZONE)>0
+				and Duel.IsExistingMatchingCard(s.spfilter2,tp,LOCATION_GRAVE,0,1,nil,e,tp)
+				and Duel.SelectYesNo(tp,0) then
+				Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SPSUMMON)
+				local g2=Duel.SelectMatchingCard(tp,s.spfilter2,tp,LOCATION_GRAVE,0,1,1,nil,e,tp)
+				if #g2>0 then
+					Duel.SpecialSummon(g2,0,tp,tp,false,false,POS_FACEUP)
+				end
 			end
 		end
 	end
