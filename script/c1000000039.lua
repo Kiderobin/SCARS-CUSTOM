@@ -47,8 +47,6 @@ function s.spop(e,tp,eg,ep,ev,re,r,rp)
 	e1:SetTarget(s.splimit)
 	e1:SetReset(RESET_PHASE+PHASE_END)
 	Duel.RegisterEffect(e1,tp)
-	--Debug: Confirm restriction applied
-	Duel.Hint(HINT_MESSAGE,tp,aux.Stringid(id,2))
 	--Special Summon from hand or Deck
 	if Duel.GetLocationCount(tp,LOCATION_MZONE)<=0 then return end
 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SPSUMMON)
@@ -58,7 +56,7 @@ function s.spop(e,tp,eg,ep,ev,re,r,rp)
 			--Optional Special Summon from Graveyard
 			if Duel.GetLocationCount(tp,LOCATION_MZONE)>0
 				and Duel.IsExistingMatchingCard(s.spfilter2,tp,LOCATION_GRAVE,0,1,nil,e,tp)
-				and Duel.SelectYesNo(tp,aux.Stringid(id,1)) then
+				and Duel.SelectYesNo(tp,0) then
 				Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SPSUMMON)
 				local g2=Duel.SelectMatchingCard(tp,s.spfilter2,tp,LOCATION_GRAVE,0,1,1,nil,e,tp)
 				if #g2>0 then
